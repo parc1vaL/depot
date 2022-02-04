@@ -4,42 +4,41 @@ public static class Operations
 {
     private static Repository repository = new Repository();
 
-    public static Task AddTransactionAsync(string date, double amount, string? remark)
+    public static Task AddTransactionAsync(string file, DateTime date, double amount, string remark)
     {
         return repository.AddTransactionAsync(
+            file,
             new Transaction
             {
-                Date = DateTime.Parse(date),
+                Date = date,
                 Amount = amount,
                 Remark = remark ?? string.Empty,
             }
         );
     }
 
-    public static Task RemoveTransactionAsync()
+    public static Task RemoveTransactionAsync(string file)
     {
-        return repository.DeleteTransactionAsync();
+        return repository.DeleteTransactionAsync(file);
     }
 
-    public static async Task EvaluateTransactionsAsync(double? value)
+    public static async Task EvaluateTransactionsAsync(string file, double? value)
     {
-        var transactions = await repository.GetTransactionsAsync();
+        IEnumerable<Transaction> transactions = await repository.GetTransactionsAsync(file);
 
         if (value.HasValue)
         {
-            transactions = transactions
-                .Append(new Transaction { Date = DateTime.Today, Amount = value.Value, })
-                .ToArray();
+            transactions = transactions.Append(new Transaction { Date = DateTime.Today, Amount = value.Value, });
         }
 
         var result = Financial.RateOfReturn(transactions);
 
-        Console.WriteLine(result.ToString("P2"));
+        Console.WriteLine($"{result:P2} p.a.");
     }
 
-    public static async Task ListTransactionsAsync(bool all)
+    public static async Task ListTransactionsAsync(string file, bool all)
     {
-        var transactions = (await repository.GetTransactionsAsync()).OrderBy(t => t.Date).AsEnumerable();
+        IEnumerable<Transaction> transactions = await repository.GetTransactionsAsync(file);
 
         if (!all)
         {
@@ -49,12 +48,7 @@ public static class Operations
         Console.WriteLine("  ID  |     Date    |   Amount   | Remark");
         foreach (var transaction in transactions)
         {
-            Console.WriteLine(
-                string.Format("{0,5} | {1,11:d} | {2,10:N2} | {3}", 
-                transaction.Id,
-                transaction.Date, 
-                transaction.Amount, 
-                transaction.Remark));
+            Console.WriteLine($"{transaction.Id,5} | {transaction.Date,11:d} | {transaction.Amount,10:N2} | {transaction.Remark}");
         }
     }
 }

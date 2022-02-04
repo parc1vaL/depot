@@ -1,4 +1,5 @@
 obj/
 bin/
+app/
 .vscode/
 data.db

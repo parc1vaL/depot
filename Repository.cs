@@ -5,37 +5,36 @@ namespace Depot;
 
 public class Repository
 {
-    private const string Filename = "data.db";
-
-    public async Task<Transaction[]> GetTransactionsAsync()
+    public async Task<Transaction[]> GetTransactionsAsync(string file)
     {
-        using var connection = new SqliteConnection($"Data Source={Filename}");
+        using var connection = new SqliteConnection($"Data Source={file}");
         await AssertDatabaseExists(connection);
         return (await connection
             .QueryAsync<Transaction>(
                 "SELECT "
                 + $"ID AS {nameof(Transaction.Id)}"
-                + $", Date AS {nameof(Transaction.Date)}"
-                + $", Amount AS {nameof(Transaction.Amount)}"
-                + $", Remark AS {nameof(Transaction.Remark)} "
+                + $",Date AS {nameof(Transaction.Date)}"
+                + $",Amount AS {nameof(Transaction.Amount)}"
+                + $",Remark AS {nameof(Transaction.Remark)} "
                 + "FROM Transactions"))
+            .OrderBy(t => t.Date)
             .ToArray();
     }
 
-    public async Task AddTransactionAsync(Transaction transaction)
+    public async Task AddTransactionAsync(string file, Transaction transaction)
     {
-        using var connection = new SqliteConnection($"Data Source={Filename}");
+        using var connection = new SqliteConnection($"Data Source={file}");
         await AssertDatabaseExists(connection);
         await connection
             .ExecuteAsync(
-                "INSERT INTO Transactions (Date, Amount, Remark) "
-                + $"VALUES (@{nameof(Transaction.Date)}, @{nameof(Transaction.Amount)}, @{nameof(Transaction.Remark)});",
+                "INSERT INTO Transactions (Date,Amount,Remark) "
+                + $"VALUES (@{nameof(Transaction.Date)},@{nameof(Transaction.Amount)},@{nameof(Transaction.Remark)});",
                 transaction);
     }
 
-    public async Task DeleteTransactionAsync()
+    public async Task DeleteTransactionAsync(string file)
     {
-        using var connection = new SqliteConnection($"Data Source={Filename}");
+        using var connection = new SqliteConnection($"Data Source={file}");
         await AssertDatabaseExists(connection);
         await connection.ExecuteAsync(
             "DELETE FROM Transactions "
