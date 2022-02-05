@@ -9,7 +9,7 @@ public static class Operations
 
     public static async Task AddTransactionAsync(FileInfo file, DateTime date, double amount, string remark)
     {
-        using var connection = await ConnectionManager.Connect(file);
+        using var connection = await Repository.Connect(file);
         
         await repository.AddTransactionAsync(
             connection,
@@ -24,16 +24,16 @@ public static class Operations
 
     public static async Task RemoveTransactionAsync(FileInfo file)
     {
-        using var connection = await ConnectionManager.Connect(file);
+        using var connection = await Repository.Connect(file);
 
         await repository.DeleteTransactionAsync(connection);
     }
 
     public static async Task EvaluateTransactionsAsync(FileInfo file, double? value)
     {
-        using var connection = await ConnectionManager.Connect(file);
+        using var connection = await Repository.Connect(file);
 
-        IEnumerable<Transaction> transactions = await repository.GetTransactionsAsync(connection);
+        var transactions = await repository.GetTransactionsAsync(connection);
 
         if (value.HasValue)
         {
@@ -47,9 +47,9 @@ public static class Operations
 
     public static async Task ListTransactionsAsync(FileInfo file, bool all, SortValue sortValue, SortDirection sortDirection, int? bottom, int? top, InvocationContext invocationContext, IConsole console)
     {
-        using var connection = await ConnectionManager.Connect(file);
+        using var connection = await Repository.Connect(file);
 
-        IEnumerable<Transaction> transactions = await repository.GetTransactionsAsync(connection);
+        var transactions = await repository.GetTransactionsAsync(connection);
 
         transactions = (sortValue, sortDirection) switch
         {
@@ -82,7 +82,7 @@ public static class Operations
 
     public static async Task ModifyTransactionAsync(int id, FileInfo file, DateTime? date, double? amount, string? remark, InvocationContext invocationContext, IConsole console)
     {
-        using var connection = await ConnectionManager.Connect(file);
+        using var connection = await Repository.Connect(file);
 
         if (!date.HasValue && ! amount.HasValue && remark is null)
         {

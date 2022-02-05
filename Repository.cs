@@ -5,18 +5,31 @@ namespace Depot;
 
 public class Repository
 {
-    public async Task<Transaction[]> GetTransactionsAsync(SqliteConnection connection)
+    public static async Task<SqliteConnection> Connect(FileInfo file)
     {
-        return (await connection
+        var connection = new SqliteConnection($"Data Source={file.FullName}");
+
+        await connection.ExecuteAsync(
+            "CREATE TABLE IF NOT EXISTS Transactions("
+            + "ID INTEGER PRIMARY KEY AUTOINCREMENT"
+            + ",Date TEXT NOT NULL"
+            + ",Amount REAL NOT NULL"
+            + ",Remark TEXT NOT NULL"
+            + ");");
+
+        return connection;
+    }
+
+    public async Task<IEnumerable<Transaction>> GetTransactionsAsync(SqliteConnection connection)
+    {
+        return await connection
             .QueryAsync<Transaction>(
                 "SELECT "
                 + $"ID AS {nameof(Transaction.Id)}"
                 + $",Date AS {nameof(Transaction.Date)}"
                 + $",Amount AS {nameof(Transaction.Amount)}"
                 + $",Remark AS {nameof(Transaction.Remark)} "
-                + "FROM Transactions"))
-            .OrderBy(t => t.Date)
-            .ToArray();
+                + "FROM Transactions");
     }
 
     public async Task<Transaction?> GetTransactionAsync(SqliteConnection connection, int id)
