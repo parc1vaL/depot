@@ -5,10 +5,8 @@ namespace Depot;
 
 public class Repository
 {
-    public async Task<Transaction[]> GetTransactionsAsync(string file)
+    public async Task<Transaction[]> GetTransactionsAsync(SqliteConnection connection)
     {
-        using var connection = new SqliteConnection($"Data Source={file}");
-        await AssertDatabaseExists(connection);
         return (await connection
             .QueryAsync<Transaction>(
                 "SELECT "
@@ -21,10 +19,22 @@ public class Repository
             .ToArray();
     }
 
-    public async Task AddTransactionAsync(string file, Transaction transaction)
+    public async Task<Transaction?> GetTransactionAsync(SqliteConnection connection, int id)
     {
-        using var connection = new SqliteConnection($"Data Source={file}");
-        await AssertDatabaseExists(connection);
+        return await connection
+            .QuerySingleOrDefaultAsync<Transaction>(
+                "SELECT "
+                + $"ID AS {nameof(Transaction.Id)}"
+                + $",Date AS {nameof(Transaction.Date)}"
+                + $",Amount AS {nameof(Transaction.Amount)}"
+                + $",Remark AS {nameof(Transaction.Remark)} "
+                + "FROM Transactions "
+                + $"WHERE ID = @Id;",
+                new { Id = id, });
+    }
+
+    public async Task AddTransactionAsync(SqliteConnection connection, Transaction transaction)
+    {
         await connection
             .ExecuteAsync(
                 "INSERT INTO Transactions (Date,Amount,Remark) "
@@ -32,23 +42,22 @@ public class Repository
                 transaction);
     }
 
-    public async Task DeleteTransactionAsync(string file)
+    public async Task UpdateTransactionAsync(SqliteConnection connection, Transaction transaction)
     {
-        using var connection = new SqliteConnection($"Data Source={file}");
-        await AssertDatabaseExists(connection);
+        await connection
+            .ExecuteAsync(
+                "UPDATE Transactions SET " 
+                + $"Date =@{nameof(Transaction.Date)}"
+                + $",Amount = @{nameof(Transaction.Amount)}"
+                + $",Remark = @{nameof(Transaction.Remark)}"
+                + $" WHERE ID = @{nameof(Transaction.Id)};",
+                transaction);
+    }
+
+    public async Task DeleteTransactionAsync(SqliteConnection connection)
+    {
         await connection.ExecuteAsync(
             "DELETE FROM Transactions "
             + "WHERE ID = (SELECT MAX(ID) FROM Transactions);");
-    }
-
-    private static async Task AssertDatabaseExists(SqliteConnection connection)
-    {
-        await connection.ExecuteAsync(
-            "CREATE TABLE IF NOT EXISTS Transactions("
-            + "ID INTEGER PRIMARY KEY AUTOINCREMENT"
-            + ",Date TEXT NOT NULL"
-            + ",Amount REAL NOT NULL"
-            + ",Remark TEXT NOT NULL"
-            + ");");
     }
 }

@@ -1,13 +1,18 @@
+using System.CommandLine;
+using System.CommandLine.Invocation;
+
 namespace Depot;
 
 public static class Operations
 {
     private static Repository repository = new Repository();
 
-    public static Task AddTransactionAsync(string file, DateTime date, double amount, string remark)
+    public static async Task AddTransactionAsync(FileInfo file, DateTime date, double amount, string remark)
     {
-        return repository.AddTransactionAsync(
-            file,
+        using var connection = await ConnectionManager.Connect(file);
+        
+        await repository.AddTransactionAsync(
+            connection,
             new Transaction
             {
                 Date = date,
@@ -17,14 +22,18 @@ public static class Operations
         );
     }
 
-    public static Task RemoveTransactionAsync(string file)
+    public static async Task RemoveTransactionAsync(FileInfo file)
     {
-        return repository.DeleteTransactionAsync(file);
+        using var connection = await ConnectionManager.Connect(file);
+
+        await repository.DeleteTransactionAsync(connection);
     }
 
-    public static async Task EvaluateTransactionsAsync(string file, double? value)
+    public static async Task EvaluateTransactionsAsync(FileInfo file, double? value)
     {
-        IEnumerable<Transaction> transactions = await repository.GetTransactionsAsync(file);
+        using var connection = await ConnectionManager.Connect(file);
+
+        IEnumerable<Transaction> transactions = await repository.GetTransactionsAsync(connection);
 
         if (value.HasValue)
         {
@@ -36,13 +45,15 @@ public static class Operations
         Console.WriteLine($"{result:P2} p.a.");
     }
 
-    public static async Task ListTransactionsAsync(string file, bool all)
+    public static async Task ListTransactionsAsync(FileInfo file, bool all, int count, InvocationContext invocationContext, IConsole console)
     {
-        IEnumerable<Transaction> transactions = await repository.GetTransactionsAsync(file);
+        using var connection = await ConnectionManager.Connect(file);
+
+        IEnumerable<Transaction> transactions = await repository.GetTransactionsAsync(connection);
 
         if (!all)
         {
-            transactions = transactions.TakeLast(10);
+            transactions = transactions.TakeLast(count);
         }
 
         Console.WriteLine("  ID  |     Date    |   Amount   | Remark");
@@ -50,5 +61,36 @@ public static class Operations
         {
             Console.WriteLine($"{transaction.Id,5} | {transaction.Date,11:d} | {transaction.Amount,10:N2} | {transaction.Remark}");
         }
+    }
+
+    public static async Task ModifyTransactionAsync(int id, FileInfo file, DateTime? date, double? amount, string? remark, InvocationContext invocationContext, IConsole console)
+    {
+        using var connection = await ConnectionManager.Connect(file);
+
+        if (!date.HasValue && ! amount.HasValue && remark is null)
+        {
+            console.Error.Write("At least one modified value is required.");
+            console.Error.Write(Environment.NewLine);
+            invocationContext.ExitCode = 1;
+            return;
+        }
+
+        var transaction = await repository.GetTransactionAsync(connection, id);
+
+        if (transaction is null)
+        {
+            console.Error.Write($"Transaction ID {id} does not exist.");
+            console.Error.Write(Environment.NewLine);
+            invocationContext.ExitCode = 1;
+            return;
+        }
+
+        transaction.Date = date ?? transaction.Date;
+        transaction.Amount = amount ?? transaction.Amount;
+        transaction.Remark = remark ?? transaction.Remark;
+
+        await repository.UpdateTransactionAsync(connection, transaction);
+
+        return;
     }
 }
