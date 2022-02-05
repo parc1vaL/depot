@@ -45,15 +45,32 @@ public static class Operations
         Console.WriteLine($"{result:P2} p.a.");
     }
 
-    public static async Task ListTransactionsAsync(FileInfo file, bool all, int count, InvocationContext invocationContext, IConsole console)
+    public static async Task ListTransactionsAsync(FileInfo file, bool all, SortValue sortValue, SortDirection sortDirection, int? bottom, int? top, InvocationContext invocationContext, IConsole console)
     {
         using var connection = await ConnectionManager.Connect(file);
 
         IEnumerable<Transaction> transactions = await repository.GetTransactionsAsync(connection);
 
-        if (!all)
+        transactions = (sortValue, sortDirection) switch
         {
-            transactions = transactions.TakeLast(count);
+            (SortValue.Id, SortDirection.Asc) => transactions.OrderBy(t => t.Id),
+            (SortValue.Id, SortDirection.Desc) => transactions.OrderByDescending(t => t.Id),
+            (SortValue.Date, SortDirection.Asc) => transactions.OrderBy(t => t.Date),
+            (SortValue.Date, SortDirection.Desc) => transactions.OrderByDescending(t => t.Date),
+            (SortValue.Amount, SortDirection.Asc) => transactions.OrderBy(t => t.Amount),
+            (SortValue.Amount, SortDirection.Desc) => transactions.OrderByDescending(t => t.Amount),
+            (SortValue.Remark, SortDirection.Asc) => transactions.OrderBy(t => t.Remark),
+            (SortValue.Remark, SortDirection.Desc) => transactions.OrderByDescending(t => t.Remark),
+            _ => throw new InvalidOperationException("Invalid sorting attempt."),
+        };
+
+        if (top.HasValue)
+        {
+            transactions = transactions.Take(top.Value);
+        }
+        if (bottom.HasValue)
+        {
+            transactions = transactions.TakeLast(bottom.Value);
         }
 
         Console.WriteLine("  ID  |     Date    |   Amount   | Remark");

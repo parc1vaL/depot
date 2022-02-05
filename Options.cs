@@ -35,19 +35,45 @@ public static class Options
         };
 
         ShowAll = new Option<bool>(new[] { "--all", "-a", }, () => false, "Shows all transactions.");
-        Count = new Option<int>(new[] { "--count", "-c", }, () => 10, "Show this number of transactions.")
+        Bottom = new Option<int?>(new[] { "--bottom", "-b", }, () => 10, "Show only the bottom n transactions.")
         {
             Arity = ArgumentArity.ZeroOrOne,
         };
-        Count.AddValidator(r =>
+        Bottom.AddValidator(r =>
         {
             if (!string.IsNullOrEmpty(r.Token.Value) && r.FindResultFor(ShowAll)?.GetValueOrDefault<bool>() == true)
             {
-                return "Options \"--all\" and \"--count\" are mutually exclusive.";
+                return "Options \"--all\" and \"--bottom\" are mutually exclusive.";
             }
 
             return null;
         });
+        Top = new Option<int?>(new[] { "--top", "-t", }, "Show only the top n transactions.")
+        {
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+        Top.AddValidator(r =>
+        {
+            if (!string.IsNullOrEmpty(r.Token.Value) && r.FindResultFor(ShowAll)?.GetValueOrDefault<bool>() == true)
+            {
+                return "Options \"--all\" and \"--top\" are mutually exclusive.";
+            }
+
+            if (!string.IsNullOrEmpty(r.Token.Value) && r.FindResultFor(Top) is not null)
+            {
+                return "Options \"--bottom\" and \"--top\" are mutually exclusive.";
+            }
+
+            return null;
+        });
+        SortValue = new Option<SortValue>(new[] { "--sort", "-s", }, () => Depot.SortValue.Date, "The property to sort by.")
+        {
+            Arity = ArgumentArity.ExactlyOne,
+        };
+        SortDirection = new Option<SortDirection>(new[] { "--direction", "-d", }, () => Depot.SortDirection.Asc, "The sort direction.")
+        {
+            Arity = ArgumentArity.ExactlyOne,
+        };
 
         Id = new Argument<int>("id", "The transaction ID.")
         {
@@ -80,7 +106,10 @@ public static class Options
 
     // Options for "List" command
     public static Option<bool> ShowAll;
-    public static Option<int> Count;
+    public static Option<int?> Bottom;
+    public static Option<int?> Top;
+    public static Option<SortValue> SortValue;
+    public static Option<SortDirection> SortDirection;
 
     // Options for "Modify" command
     public static Argument<int> Id;
