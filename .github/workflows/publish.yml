@@ -25,6 +25,7 @@ jobs:
       run: >
         MSBUILDDISABLENODEREUSE=1 dotnet publish
         --configuration Release
+        --no-builo
         --self-contained
         --runtime linux-x64
         -p:DebugType=None
