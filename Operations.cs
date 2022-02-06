@@ -22,11 +22,18 @@ public static class Operations
         );
     }
 
-    public static async Task RemoveTransactionAsync(FileInfo file)
+    public static async Task RemoveTransactionAsync(FileInfo file, int? id)
     {
         using var connection = await Repository.Connect(file);
 
-        await repository.DeleteTransactionAsync(connection);
+        if (id.HasValue)
+        {
+            await repository.DeleteTransactionAsync(connection, id.Value);
+        }
+        else
+        {
+            await repository.DeleteTransactionAsync(connection);
+        }
     }
 
     public static async Task EvaluateTransactionsAsync(FileInfo file, double? value)

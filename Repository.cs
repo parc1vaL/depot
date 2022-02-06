@@ -73,4 +73,12 @@ public class Repository
             "DELETE FROM Transactions "
             + "WHERE ID = (SELECT MAX(ID) FROM Transactions);");
     }
+
+    public async Task DeleteTransactionAsync(SqliteConnection connection, int id)
+    {
+        await connection.ExecuteAsync(
+            "DELETE FROM Transactions "
+            + "WHERE ID = @Id;",
+            new { Id = id, });
+    }
 }

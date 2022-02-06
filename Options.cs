@@ -91,6 +91,11 @@ public static class Options
         {
             Arity = ArgumentArity.ExactlyOne,
         };
+
+        RemoveId = new Argument<int?>("id", "The transaction ID.")
+        {
+            Arity = ArgumentArity.ZeroOrOne,
+        };
     }
 
     // Shared options
@@ -100,6 +105,9 @@ public static class Options
     public static Option<DateTime> Date ;
     public static Option<double> Amount;
     public static Option<string> Remark;
+
+    // Options for "Remove" command
+    public static Argument<int?> RemoveId;
 
     // Options for "Evaluate" command
     public static Argument<double?> Value;

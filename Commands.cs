@@ -21,11 +21,15 @@ public static class Commands
             Options.Amount,
             Options.Remark);
 
-        Remove = new Command("remove", "Removes the last transaction.");
+        Remove = new Command("remove", "Removes the last transaction.")
+        {
+            Options.RemoveId,
+        };
         Remove.AddAlias("r");
-        Remove.SetHandler<FileInfo>(
+        Remove.SetHandler<FileInfo, int?>(
             Operations.RemoveTransactionAsync,
-            Options.File);
+            Options.File,
+            Options.RemoveId);
 
         Modify = new Command("modify", "Modifies a transaction.")
         { 
