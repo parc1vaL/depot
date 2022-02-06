@@ -47,9 +47,11 @@ public static class Operations
             transactions = transactions.Append(new Transaction { Date = DateTime.Today, Amount = value.Value, });
         }
 
-        var result = Financial.RateOfReturn(transactions);
+        var irr = Financial.RateOfReturn(transactions);
+        var earnings = transactions.Sum(t => t.Amount);
 
-        Console.WriteLine($"{result:P2} p.a.");
+        Console.WriteLine($"Earnings: {earnings:N2} EUR");
+        Console.WriteLine($"Rate of return: {irr:P2} p.a.");
     }
 
     public static async Task ListTransactionsAsync(FileInfo file, bool all, SortValue sortValue, SortDirection sortDirection, int? bottom, int? top, InvocationContext invocationContext, IConsole console)
