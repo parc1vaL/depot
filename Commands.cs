@@ -60,21 +60,19 @@ public static class Commands
 
         List = new Command("list", "Lists transactions.")
         {
-            Options.ShowAll,
             Options.SortValue,
             Options.SortDirection,
-            Options.Bottom,
-            Options.Top,
+            Options.Count,
+            Options.Reverse,
         };
         List.AddAlias("l");
-        List.SetHandler<FileInfo, bool, SortValue, SortDirection, int?, int?, InvocationContext, IConsole>(
+        List.SetHandler<FileInfo, SortValue, SortDirection, int, bool, InvocationContext, IConsole>(
             Operations.ListTransactionsAsync,
             Options.File,
-            Options.ShowAll,
             Options.SortValue,
             Options.SortDirection,
-            Options.Bottom,
-            Options.Top);
+            Options.Count,
+            Options.Reverse);
 
         Root  = new RootCommand
         {

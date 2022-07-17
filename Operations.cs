@@ -54,7 +54,14 @@ public static class Operations
         Console.WriteLine($"Rate of return: {irr:P2} p.a.");
     }
 
-    public static async Task ListTransactionsAsync(FileInfo file, bool all, SortValue sortValue, SortDirection sortDirection, int? bottom, int? top, InvocationContext invocationContext, IConsole console)
+    public static async Task ListTransactionsAsync(
+        FileInfo file, 
+        SortValue sortValue, 
+        SortDirection sortDirection,
+        int count, 
+        bool reverse,
+        InvocationContext invocationContext, 
+        IConsole console)
     {
         using var connection = await Repository.Connect(file);
 
@@ -73,13 +80,14 @@ public static class Operations
             _ => throw new InvalidOperationException("Invalid sorting attempt."),
         };
 
-        if (top.HasValue)
+        if (count != 0)
         {
-            transactions = transactions.Take(top.Value);
+            transactions = transactions.Take(count);
         }
-        if (bottom.HasValue)
+
+        if (reverse)
         {
-            transactions = transactions.TakeLast(bottom.Value);
+            transactions = transactions.Reverse();
         }
 
         Console.WriteLine("  ID  |     Date    |   Amount   | Remark");
