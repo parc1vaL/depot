@@ -4,7 +4,7 @@ namespace Depot;
 
 public static class Options
 {
-    private static FileInfo DefaultFile = new FileInfo("data.db");
+    private static readonly FileInfo DefaultFile = new("data.db");
 
     static Options()
     {
@@ -34,45 +34,21 @@ public static class Options
             Arity = ArgumentArity.ZeroOrOne,
         };
 
-        ShowAll = new Option<bool>(new[] { "--all", "-a", }, () => false, "Shows all transactions.");
-        Bottom = new Option<int?>(new[] { "--bottom", "-b", }, () => 10, "Show only the bottom n transactions.")
+        Count = new Option<int>(new[] { "--number", "-n", }, () => 10, "Show only the top n transactions.")
         {
             Arity = ArgumentArity.ZeroOrOne,
-        };
-        Bottom.AddValidator(r =>
-        {
-            if (!string.IsNullOrEmpty(r.Token.Value) && r.FindResultFor(ShowAll)?.GetValueOrDefault<bool>() == true)
-            {
-                return "Options \"--all\" and \"--bottom\" are mutually exclusive.";
-            }
-
-            return null;
-        });
-        Top = new Option<int?>(new[] { "--top", "-t", }, "Show only the top n transactions.")
-        {
-            Arity = ArgumentArity.ZeroOrOne,
-        };
-        Top.AddValidator(r =>
-        {
-            if (!string.IsNullOrEmpty(r.Token.Value) && r.FindResultFor(ShowAll)?.GetValueOrDefault<bool>() == true)
-            {
-                return "Options \"--all\" and \"--top\" are mutually exclusive.";
-            }
-
-            if (!string.IsNullOrEmpty(r.Token.Value) && r.FindResultFor(Top) is not null)
-            {
-                return "Options \"--bottom\" and \"--top\" are mutually exclusive.";
-            }
-
-            return null;
-        });
+        };        
         SortValue = new Option<SortValue>(new[] { "--sort", "-s", }, () => Depot.SortValue.Date, "The property to sort by.")
         {
             Arity = ArgumentArity.ExactlyOne,
         };
-        SortDirection = new Option<SortDirection>(new[] { "--direction", "-d", }, () => Depot.SortDirection.Asc, "The sort direction.")
+        SortDirection = new Option<SortDirection>(new[] { "--direction", "-d", }, () => Depot.SortDirection.Desc, "The sort direction.")
         {
             Arity = ArgumentArity.ExactlyOne,
+        };
+        Reverse = new Option<bool>(new[] { "--reverse", "-r", }, () => false, "Reverses the order of the output.")
+        {
+            Arity = ArgumentArity.ZeroOrOne,
         };
 
         Id = new Argument<int>("id", "The transaction ID.")
@@ -102,7 +78,7 @@ public static class Options
     public static Option<FileInfo> File;
 
     // Options for "Add" command
-    public static Option<DateTime> Date ;
+    public static Option<DateTime> Date;
     public static Option<double> Amount;
     public static Option<string> Remark;
 
@@ -113,11 +89,10 @@ public static class Options
     public static Argument<double?> Value;
 
     // Options for "List" command
-    public static Option<bool> ShowAll;
-    public static Option<int?> Bottom;
-    public static Option<int?> Top;
+    public static Option<int> Count;
     public static Option<SortValue> SortValue;
     public static Option<SortDirection> SortDirection;
+    public static Option<bool> Reverse;
 
     // Options for "Modify" command
     public static Argument<int> Id;
